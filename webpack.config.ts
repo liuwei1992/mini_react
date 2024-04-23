@@ -1,7 +1,7 @@
-import * as path from 'path';
-import webpack from 'webpack';
+import * as path from 'path'
+import webpack from 'webpack'
 // in case you run into any typescript error when configuring `devServer`
-import 'webpack-dev-server';
+import 'webpack-dev-server'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 
 const config: webpack.Configuration = {
@@ -9,22 +9,22 @@ const config: webpack.Configuration = {
   entry: './src/main.tsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: '[name].bundle.js',
+    filename: '[name].bundle.js'
   },
   devServer: {
-    hot: true
+    hot: false
   },
   cache: {
-    type: "filesystem"
+    type: 'filesystem'
   },
-  devtool:'cheap-module-source-map',
+  devtool: 'cheap-module-source-map',
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.json'],
     alias: {
       '@': path.resolve(__dirname, './src')
     }
   },
-  module:{
+  module: {
     rules: [
       {
         test: /\.tsx?$/,
@@ -32,11 +32,11 @@ const config: webpack.Configuration = {
       }
     ]
   },
-  plugins:[
+  plugins: [
     new HtmlWebpackPlugin({
       template: './index.html'
     })
   ]
-};
+}
 
-export default config;
+export default config
