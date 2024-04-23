@@ -1,0 +1,42 @@
+import * as path from 'path';
+import webpack from 'webpack';
+// in case you run into any typescript error when configuring `devServer`
+import 'webpack-dev-server';
+import HtmlWebpackPlugin from 'html-webpack-plugin'
+
+const config: webpack.Configuration = {
+  mode: 'development',
+  entry: './src/main.tsx',
+  output: {
+    path: path.resolve(__dirname, 'dist'),
+    filename: '[name].bundle.js',
+  },
+  devServer: {
+    hot: true
+  },
+  cache: {
+    type: "filesystem"
+  },
+  devtool:'cheap-module-source-map',
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js', '.json'],
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
+  module:{
+    rules: [
+      {
+        test: /\.tsx?$/,
+        loader: 'ts-loader'
+      }
+    ]
+  },
+  plugins:[
+    new HtmlWebpackPlugin({
+      template: './index.html'
+    })
+  ]
+};
+
+export default config;
