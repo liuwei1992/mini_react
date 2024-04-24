@@ -1,4 +1,5 @@
 import { beginWork } from './beginWork'
+import { completeWork } from './completeWork'
 import { createWorkInProgress, FiberNode, FiberRootNode } from './fiber'
 import {
   FunctionComponent,
@@ -27,6 +28,23 @@ function markUpdateFromFiberToRoot(fiber: FiberNode): FiberRootNode | null {
   }
 
   return null
+}
+
+function completeUnitOfWork(fiber: FiberNode) {
+  let node: FiberNode | null = fiber
+
+  do {
+    completeWork(node)
+    const sibling = node.sibling
+
+    if (sibling !== null) {
+      workInProgress = sibling
+      return
+    }
+
+    node = node.return
+    workInProgress = node
+  } while (node !== null)
 }
 
 // fiber 是 wip
@@ -64,6 +82,7 @@ function renderRoot(root: FiberRootNode) {
 
   root.finishedWork = root.current.alternate
 
+  // 真实的 dom 渲染
   commitRoot(root)
 }
 

@@ -26,7 +26,13 @@ A & B === B
 * 删 A 中删除 B 标记
 A &= ~B
 
-# 递 阶段
+# performUnitOfWork （while） 递与归
+## 递(beginWork) 阶段
 * 创建子元素fiber
 * 打 flags 标记
 * 创建 child、return 关系
+
+## 归(completeUnitOfWork) do-while 阶段
+* 创建真实dom节点
+* 处理subtreeFlags
+* 建立dom节点的关系，把子节点插入到父节点
