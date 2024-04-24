@@ -1,12 +1,9 @@
 import { beginWork } from './beginWork'
+import { commitMutationEffects } from './commitWork'
 import { completeWork } from './completeWork'
 import { createWorkInProgress, FiberNode, FiberRootNode } from './fiber'
-import {
-  FunctionComponent,
-  HostComponent,
-  HostRoot,
-  HostText
-} from './workTags'
+import { MutationMask, NoFlags } from './fiberFlags'
+import { HostRoot } from './workTags'
 
 let workInProgress: FiberNode | null = null
 
@@ -61,6 +58,28 @@ function performUnitOfWork(fiber: FiberNode): void {
   }
 }
 
+function commitRoot(root: FiberRootNode) {
+  const finishedWork = root.finishedWork
+
+  if (finishedWork === null) {
+    return
+  }
+
+  root.finishedWork = null
+
+  const subtreeHasEffect =
+    (finishedWork.subtreeFlags & MutationMask) !== NoFlags
+  const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags
+
+  if (subtreeHasEffect || rootHasEffect) {
+    commitMutationEffects(finishedWork)
+
+    root.current = finishedWork
+  } else {
+    root.current = finishedWork
+  }
+}
+
 function workLoop(): void {
   while (workInProgress !== null) {
     performUnitOfWork(workInProgress)
@@ -89,5 +108,5 @@ function renderRoot(root: FiberRootNode) {
 export function scheduleUpdateOnFiber(fiber: FiberNode) {
   const root = markUpdateFromFiberToRoot(fiber)
 
-  renderRoot(root)
+  renderRoot(root!)
 }
