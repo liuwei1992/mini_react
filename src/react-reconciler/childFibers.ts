@@ -49,6 +49,13 @@ function ChildReconciler(shouldTrackEffect: boolean) {
           console.error('未实现的 reconcile 类型', newChild)
           break
       }
+    } 
+
+    // string|number类型
+    if(typeof newChild === 'string' || typeof newChild === 'number'){
+      return placeSingleChild(
+        reconcilerSingleTextNode(returnFiber, currentFiber, newChild)
+      )
     }
 
     return null

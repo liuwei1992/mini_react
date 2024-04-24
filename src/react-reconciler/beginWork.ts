@@ -41,7 +41,8 @@ function updateHostRoot(wip: FiberNode): FiberNode | null {
   return wip.child
 }
 
-function reconcilerChildren(wip: FiberNode, children: ReactElementType): void {
+// 建立 fiber、父子关系
+function reconcilerChildren(wip: FiberNode, children?: ReactElementType): void {
   const current = wip.alternate
 
   if (current !== null) {
@@ -52,7 +53,12 @@ function reconcilerChildren(wip: FiberNode, children: ReactElementType): void {
 }
 
 function updateHostComponent(wip: FiberNode): FiberNode | null {
-  return null
+  const nextProps = wip.pendingProps
+  const nextChildren = nextProps!.children
+
+  reconcilerChildren(wip, nextChildren)
+
+  return wip.child
 }
 
 function updateFunctionComponent(wip: FiberNode): FiberNode | null {

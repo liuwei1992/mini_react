@@ -4,7 +4,7 @@ export type Type = any
 export type Key = string | number | bigint | null
 export type Ref = any | null
 export type Props = null | {
-  children?: string | ReactElementType | ReactElementType[]
+  children?: any // string | ReactElementType | ReactElementType[]
   [p: string]: any
 }
 export type ElementType = RElementType

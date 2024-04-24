@@ -17,3 +17,16 @@ TSX file:
   import { myJsx } from "@/react";
   const HelloWorld = () => <div>Hello</div>; 
 ```
+
+# 位运算 权限判断
+* 加 A 加上标记 B  
+A |= B
+* 判断有 A 中是否有 B
+A & B === B
+* 删 A 中删除 B 标记
+A &= ~B
+
+# 递 阶段
+* 创建子元素fiber
+* 打 flags 标记
+* 创建 child、return 关系

@@ -2,6 +2,7 @@ import { ReactElementType } from '@/shared/ReactTypes'
 import { FiberNode, FiberRootNode } from './fiber'
 import { HostRoot } from './workTags'
 import { createUpdate, createUpdateQueue, enqueueUpdate } from './updateQueue'
+import { scheduleUpdateOnFiber } from './workLoop'
 
 export function createContainer(container: HTMLElement) {
   const hostRootFiber = new FiberNode(HostRoot, {}, null)
