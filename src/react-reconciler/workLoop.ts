@@ -1,13 +1,19 @@
+import { beginWork } from './beginWork'
 import { createWorkInProgress, FiberNode, FiberRootNode } from './fiber'
-import { HostRoot } from './workTags'
+import {
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText
+} from './workTags'
 
 let workInProgress: FiberNode | null = null
 
-function prepareFreshStack(root: FiberRootNode) {
+function prepareFreshStack(root: FiberRootNode): void {
   workInProgress = createWorkInProgress(root.current, {})
 }
 // 找到最顶层的root
-function markUpdateFromFiberToRoot(fiber: FiberNode) {
+function markUpdateFromFiberToRoot(fiber: FiberNode): FiberRootNode | null {
   let node = fiber
   let parent = node.return
 
@@ -21,6 +27,26 @@ function markUpdateFromFiberToRoot(fiber: FiberNode) {
   }
 
   return null
+}
+
+// fiber 是 wip
+function performUnitOfWork(fiber: FiberNode): void {
+  // 递
+  const next = beginWork(fiber)
+  fiber.memoizesProps = fiber.pendingProps
+
+  if (next === null) {
+    // 归
+    completeUnitOfWork(fiber)
+  } else {
+    workInProgress = next
+  }
+}
+
+function workLoop(): void {
+  while (workInProgress !== null) {
+    performUnitOfWork(workInProgress)
+  }
 }
 
 function renderRoot(root: FiberRootNode) {

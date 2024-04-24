@@ -26,9 +26,29 @@ export function createUpdateQueue<State = any>(): UpdateQueue<State> {
   }
 }
 
-export function enqueueUpdate<T>(
-  updateQueue: UpdateQueue<T>,
-  update: Update<T>
+export function enqueueUpdate<State>(
+  updateQueue: UpdateQueue<State>,
+  update: Update<State>
 ) {
   updateQueue.shared.pending = update
+}
+
+export function processUpdateQueue<State = any>(
+  baseState: State,
+  pendingUpdate: Update<State>
+): { memoizedState: State } {
+  const result = {
+    memoizedState: baseState
+  }
+
+  if (pendingUpdate !== null) {
+    const action = pendingUpdate.action
+    if (action instanceof Function) {
+      result.memoizedState = action(baseState)
+    } else {
+      result.memoizedState = action
+    }
+  }
+
+  return result
 }

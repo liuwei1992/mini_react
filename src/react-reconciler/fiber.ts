@@ -17,8 +17,9 @@ export class FiberNode {
   // 子元素中的第几个
   index: number = 0
 
-  // 更新后的props状态
+  /** 更新后的props状态 */
   memoizesProps: Props | null = null
+  /** element 对象 */
   memoizedState: any = null
 
   // 备用 双缓存
@@ -49,7 +50,7 @@ export function createFiberFromElement(element: ReactElementType) {
 
   if (typeof type === 'string') {
     tag = HostComponent
-  } else if (typeof type !== 'string') {
+  } else if (typeof type !== 'function') {
     console.error('未定义的type类型', type)
   }
 
@@ -69,7 +70,10 @@ export class FiberRootNode {
   }
 }
 
-export function createWorkInProgress(current: FiberNode, pendingProps: Props) {
+export function createWorkInProgress(
+  current: FiberNode,
+  pendingProps: Props
+): FiberNode {
   let wip = current.alternate
 
   if (wip == null) {

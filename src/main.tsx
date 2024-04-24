@@ -19,7 +19,4 @@ const App = function () {
 const root = document.querySelector('#main')
 console.log('App element', App())
 console.log('App', <App />)
-const root1 = ReactDom.createRoot(root as HTMLElement)
-debugger
-
-root1.render(<App />)
+ReactDom.createRoot(root as HTMLElement).render(<App />)
