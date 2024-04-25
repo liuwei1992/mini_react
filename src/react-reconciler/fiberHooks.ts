@@ -1,9 +1,8 @@
-import type { ReactElementType } from '@/shared/ReactTypes'
+import type { Action, ReactElementType } from '@/shared/ReactTypes'
 import type { FiberNode } from './fiber'
 import internals from '@/shared/internals'
 import { Dispatch, Dispatcher } from '@/react/currentDispatcher'
 import {
-  Action,
   createUpdate,
   createUpdateQueue,
   enqueueUpdate,
@@ -11,6 +10,7 @@ import {
   UpdateQueue
 } from './updateQueue'
 import { scheduleUpdateOnFiber } from './workLoop'
+import { Lane, NoLane } from './fiberLanes'
 
 interface Hook {
   memoizedState: any
@@ -24,12 +24,15 @@ let currentlyRenderingFiber: FiberNode | null = null
 let workInProgressHook: Hook | null = null
 /** 当前在处理哪个hooks */
 let currentHook: Hook | null = null
+let renderLane: Lane = NoLane
 
-export function renderWithHooks(wip: FiberNode): ReactElementType {
+export function renderWithHooks(wip: FiberNode, lane: Lane): ReactElementType {
   // 赋值
   currentlyRenderingFiber = wip
   // 重置 hooks 链表
   wip.memoizedState = null
+  wip.updateQueue = null
+  renderLane = lane
   const current = wip.alternate
 
   if (current !== null) {
@@ -45,6 +48,7 @@ export function renderWithHooks(wip: FiberNode): ReactElementType {
   currentlyRenderingFiber = null
   workInProgressHook = null
   currentHook = null
+  renderLane = NoLane
 
   return children
 }

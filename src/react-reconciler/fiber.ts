@@ -1,7 +1,8 @@
 import type { Key, Props, ReactElementType, Ref } from '@/shared/ReactTypes'
 import { type Flags, NoFlags } from './fiberFlags'
-import { FunctionComponent, HostComponent, WorkTag } from './workTags'
+import { Fragment, FunctionComponent, HostComponent, WorkTag } from './workTags'
 import { UpdateQueue } from './updateQueue'
+import { NoLane } from './fiberLanes'
 
 export class FiberNode {
   // 元素类型， 函数式组件就是函数本身
@@ -61,10 +62,15 @@ export function createFiberFromElement(element: ReactElementType) {
   return fiber
 }
 
+export function createFiberFromFragment(elements: any[], key: Key) {
+  const fiber = new FiberNode(Fragment, elements, key)
+  return fiber
+}
+
 export class FiberRootNode {
   finishedWork: FiberNode | null
-  finishedLane = 0
-  pendingLanes = 0
+  finishedLane = NoLane
+  pendingLanes = NoFlags
   pendingPassiveffects = null
 
   constructor(public container: any, public current: FiberNode) {

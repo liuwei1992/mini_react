@@ -1,4 +1,5 @@
-import { ReactElementType } from '@/shared/ReactTypes'
+import { Action, ReactElementType } from '@/shared/ReactTypes'
+import { Lane } from './fiberLanes'
 
 export type UpdateQueue<T = any> = {
   shared: {
@@ -7,20 +8,24 @@ export type UpdateQueue<T = any> = {
   dispatch: any
 }
 
-export type Update<T = any> = {
-  action: T
+export type Update<T> = {
+  action: Action<T>
+  lane: Lane
+  next: Update<any> | null
 }
-
-export type Action<T = any> = T //ReactElementType
 
 /** 返回一个 
  * {
-    action: action
+    action,
+    lane,
+    next: null
   }
   对象 */
-export function createUpdate<T>(action: Action<T>) {
+export function createUpdate<T>(action: Action<T>, lane: Lane): Update<T> {
   return {
-    action
+    action,
+    lane,
+    next: null
   }
 }
 
@@ -46,6 +51,16 @@ export function enqueueUpdate<State>(
   updateQueue: UpdateQueue<State>,
   update: Update<State>
 ) {
+  const pending = updateQueue.shared.pending
+  if (pending == null) {
+    update.next = update
+  } else {
+    update.next = pending.next
+    pending.next = update
+    // pending = 2   1->2->1
+    //  pending = 3  1->2->3->1
+    //  pending = 4  1->2->3->4->1
+  }
   updateQueue.shared.pending = update
 }
 

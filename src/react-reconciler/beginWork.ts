@@ -9,9 +9,10 @@ import {
 } from './workTags'
 import { mountChildFibers, reconcilerChildFibers } from './childFibers'
 import { renderWithHooks } from './fiberHooks'
+import { Lane } from './fiberLanes'
 
 // 递 阶段
-export function beginWork(wip: FiberNode): FiberNode | null {
+export function beginWork(wip: FiberNode, lane: Lane): FiberNode | null {
   switch (wip.tag) {
     case HostRoot:
       return updateHostRoot(wip)
@@ -20,7 +21,7 @@ export function beginWork(wip: FiberNode): FiberNode | null {
     case HostText:
       return null
     case FunctionComponent:
-      return updateFunctionComponent(wip)
+      return updateFunctionComponent(wip, lane)
     default:
       console.error('beginWork 不支持的类型')
       break
@@ -36,7 +37,7 @@ function updateHostRoot(wip: FiberNode): FiberNode | null {
 
   const { memoizedState } = processUpdateQueue<ReactElementType>(
     baseState,
-    pending
+    pending!
   )
   wip.memoizedState = memoizedState
 
@@ -53,8 +54,8 @@ function updateHostComponent(wip: FiberNode): FiberNode | null {
   return wip.child
 }
 
-function updateFunctionComponent(wip: FiberNode): FiberNode | null {
-  const nextChildren = renderWithHooks(wip)
+function updateFunctionComponent(wip: FiberNode, lane: Lane): FiberNode | null {
+  const nextChildren = renderWithHooks(wip, lane)
   reconcilerChildren(wip, nextChildren)
   return wip.child
 }

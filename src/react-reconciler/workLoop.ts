@@ -3,12 +3,23 @@ import { commitMutationEffects } from './commitWork'
 import { completeWork } from './completeWork'
 import { createWorkInProgress, FiberNode, FiberRootNode } from './fiber'
 import { MutationMask, NoFlags } from './fiberFlags'
+import {
+  getHighestPriorityLane,
+  Lane,
+  mergeLane,
+  NoLane,
+  SyncLane
+} from './fiberLanes'
+import { flushSyncCallbacks, scheduleSyncCallback } from './syncTaskQueue'
 import { HostRoot } from './workTags'
 
 let workInProgress: FiberNode | null = null
+let wipRootRenderLane: Lane = NoLane
+let RootDoesHasPassiveEffects = false
 
-function prepareFreshStack(root: FiberRootNode): void {
+function prepareFreshStack(root: FiberRootNode, lane: Lane): void {
   workInProgress = createWorkInProgress(root.current, {})
+  wipRootRenderLane = lane
 }
 // 找到最顶层的root
 function markUpdateFromFiberToRoot(fiber: FiberNode): FiberRootNode | null {
@@ -47,7 +58,7 @@ function completeUnitOfWork(fiber: FiberNode) {
 // fiber 是 wip
 function performUnitOfWork(fiber: FiberNode): void {
   // 递
-  const next = beginWork(fiber)
+  const next = beginWork(fiber, wipRootRenderLane)
   fiber.memoizesProps = fiber.pendingProps
 
   if (next === null) {
@@ -105,8 +116,53 @@ function renderRoot(root: FiberRootNode) {
   commitRoot(root)
 }
 
-export function scheduleUpdateOnFiber(fiber: FiberNode) {
-  const root = markUpdateFromFiberToRoot(fiber)
+function markRootUpdated(root: FiberRootNode, lane: Lane) {
+  root.pendingLanes = mergeLane(root.pendingLanes, lane)
+}
 
-  renderRoot(root!)
+function performSyncWorkOnRoot(root: FiberRootNode, lane: Lane) {
+  const nextLane = getHighestPriorityLane(root.pendingLanes)
+
+  if (nextLane !== SyncLane) {
+    ensureRootIsScheduled(root)
+    return
+  }
+
+  prepareFreshStack(root, lane)
+
+  do {
+    try {
+      workLoop()
+      break
+    } catch (e) {
+      workInProgress = null
+    }
+  } while (true)
+
+  const finishedWork = root.current.alternate
+  root.finishedWork = finishedWork
+  root.finishedLane = lane
+  wipRootRenderLane = NoLane
+
+  commitRoot(root)
+}
+
+function ensureRootIsScheduled(root: FiberRootNode) {
+  const updateLane = getHighestPriorityLane(root.pendingLanes)
+  if (updateLane === NoLane) {
+    return
+  }
+  if (updateLane === SyncLane) {
+    // 同步->微任务
+    scheduleSyncCallback(performSyncWorkOnRoot.bind(null, root))
+    scheduleMicroTask(flushSyncCallbacks)
+  } else {
+  }
+}
+
+export function scheduleUpdateOnFiber(fiber: FiberNode, lane: Lane) {
+  const root = markUpdateFromFiberToRoot(fiber)
+  markRootUpdated(root!, lane)
+  ensureRootIsScheduled(root!)
+  // renderRoot(root!)
 }

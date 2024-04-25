@@ -3,6 +3,7 @@ import { FiberNode, FiberRootNode } from './fiber'
 import { HostRoot } from './workTags'
 import { createUpdate, createUpdateQueue, enqueueUpdate } from './updateQueue'
 import { scheduleUpdateOnFiber } from './workLoop'
+import { requestUpdateLane } from './fiberLanes'
 
 export function createContainer(container: HTMLElement) {
   const hostRootFiber = new FiberNode(HostRoot, {}, null)
@@ -17,9 +18,11 @@ export function updateContainer(
   root: FiberRootNode
 ) {
   const hostRootfiber = root.current
-  const update = createUpdate<ReactElementType | null>(element)
+  const lane = requestUpdateLane()
+  const update = createUpdate<ReactElementType | null>(element, lane)
 
   enqueueUpdate(hostRootfiber.updateQueue!, update)
 
-  scheduleUpdateOnFiber(hostRootfiber)
+  scheduleUpdateOnFiber(hostRootfiber,lane)
+  return element
 }
