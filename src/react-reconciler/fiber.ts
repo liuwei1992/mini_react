@@ -63,6 +63,9 @@ export function createFiberFromElement(element: ReactElementType) {
 
 export class FiberRootNode {
   finishedWork: FiberNode | null
+  finishedLane = 0
+  pendingLanes = 0
+  pendingPassiveffects = null
 
   constructor(public container: any, public current: FiberNode) {
     current.stateNode = this

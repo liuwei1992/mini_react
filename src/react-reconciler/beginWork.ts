@@ -8,6 +8,7 @@ import {
   HostText
 } from './workTags'
 import { mountChildFibers, reconcilerChildFibers } from './childFibers'
+import { renderWithHooks } from './fiberHooks'
 
 // 递 阶段
 export function beginWork(wip: FiberNode): FiberNode | null {
@@ -33,7 +34,10 @@ function updateHostRoot(wip: FiberNode): FiberNode | null {
   const pending = updateQueue!.shared.pending
   updateQueue!.shared.pending = null
 
-  const { memoizedState } = processUpdateQueue(baseState, pending)
+  const { memoizedState } = processUpdateQueue<ReactElementType>(
+    baseState,
+    pending
+  )
   wip.memoizedState = memoizedState
 
   const nextChildren = wip.memoizedState
@@ -41,7 +45,21 @@ function updateHostRoot(wip: FiberNode): FiberNode | null {
   return wip.child
 }
 
-// 建立 fiber、父子关系
+function updateHostComponent(wip: FiberNode): FiberNode | null {
+  const nextChildren = wip.pendingProps!.children
+
+  reconcilerChildren(wip, nextChildren)
+
+  return wip.child
+}
+
+function updateFunctionComponent(wip: FiberNode): FiberNode | null {
+  const nextChildren = renderWithHooks(wip)
+  reconcilerChildren(wip, nextChildren)
+  return wip.child
+}
+
+/** 创建fiber对象 并 建立父子关系 */
 function reconcilerChildren(wip: FiberNode, children?: ReactElementType): void {
   const current = wip.alternate
 
@@ -50,17 +68,4 @@ function reconcilerChildren(wip: FiberNode, children?: ReactElementType): void {
   } else {
     wip.child = mountChildFibers(wip, null, children)
   }
-}
-
-function updateHostComponent(wip: FiberNode): FiberNode | null {
-  const nextProps = wip.pendingProps
-  const nextChildren = nextProps!.children
-
-  reconcilerChildren(wip, nextChildren)
-
-  return wip.child
-}
-
-function updateFunctionComponent(wip: FiberNode): FiberNode | null {
-  return null
 }
