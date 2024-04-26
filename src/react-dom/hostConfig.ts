@@ -41,3 +41,11 @@ export function commitUpdate(fiber: FiberNode) {
 }
 
 export const appendChildToContainer = appendInitialChild
+
+/** queueMicrotask || Promise.resolve || setTimeout */
+export const scheduleMicroTask =
+  typeof queueMicrotask === 'function'
+    ? queueMicrotask
+    : typeof Promise === 'function'
+    ? (callback: (...arg: any) => void) => Promise.resolve(null).then(callback)
+    : setTimeout

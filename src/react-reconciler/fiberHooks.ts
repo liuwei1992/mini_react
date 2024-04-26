@@ -10,7 +10,7 @@ import {
   UpdateQueue
 } from './updateQueue'
 import { scheduleUpdateOnFiber } from './workLoop'
-import { Lane, NoLane } from './fiberLanes'
+import { Lane, NoLane, requestUpdateLane } from './fiberLanes'
 
 interface Hook {
   memoizedState: any
@@ -97,9 +97,10 @@ function dispatchSetState<State>(
   updateQueue: UpdateQueue<State>,
   action: Action<State> // 组件内调用 setXXX 传入的值
 ) {
-  const update = createUpdate(action,renderLane)
+  const lane = requestUpdateLane()
+  const update = createUpdate(action, lane)
   enqueueUpdate(updateQueue, update)
-  scheduleUpdateOnFiber(fiber,renderLane)
+  scheduleUpdateOnFiber(fiber, lane)
 }
 
 function mountWorkInProgressHook(): Hook {

@@ -113,23 +113,23 @@ function insertOrAppendPlacementNodeIntoContainer(
   }
 }
 
-function appendPlacementNodeIntoContainer(
-  finishedWork: FiberNode,
-  hostParent: Container
-) {
-  if (finishedWork.tag === HostComponent) {
-    appendInitialChild(hostParent, finishedWork.stateNode)
-    return
-  }
+// function appendPlacementNodeIntoContainer(
+//   finishedWork: FiberNode,
+//   hostParent: Container
+// ) {
+//   if (finishedWork.tag === HostComponent) {
+//     appendInitialChild(hostParent, finishedWork.stateNode)
+//     return
+//   }
 
-  const child = finishedWork.child
-  if (child !== null) {
-    appendPlacementNodeIntoContainer(child, hostParent)
-    let sibling = child.sibling
+//   const child = finishedWork.child
+//   if (child !== null) {
+//     appendPlacementNodeIntoContainer(child, hostParent)
+//     let sibling = child.sibling
 
-    while (sibling !== null) {
-      appendPlacementNodeIntoContainer(sibling, hostParent)
-      sibling = sibling.sibling
-    }
-  }
-}
+//     while (sibling !== null) {
+//       appendPlacementNodeIntoContainer(sibling, hostParent)
+//       sibling = sibling.sibling
+//     }
+//   }
+// }

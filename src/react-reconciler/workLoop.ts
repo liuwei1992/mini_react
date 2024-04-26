@@ -1,3 +1,4 @@
+import { scheduleMicroTask } from '@/react-dom/hostConfig'
 import { beginWork } from './beginWork'
 import { commitMutationEffects } from './commitWork'
 import { completeWork } from './completeWork'
@@ -140,6 +141,7 @@ function markRootUpdated(root: FiberRootNode, lane: Lane) {
 function performSyncWorkOnRoot(root: FiberRootNode, lane: Lane) {
   const nextLane = getHighestPriorityLane(root.pendingLanes)
 
+  // 一轮事件循环中有多次 setstate时，微任务队列中会加入多个performSyncWorkOnRoot，但 nextLane 已经设置为 NoLane 所以后面几次会直接return
   if (nextLane !== SyncLane) {
     ensureRootIsScheduled(root)
     return
@@ -170,8 +172,10 @@ function ensureRootIsScheduled(root: FiberRootNode) {
     return
   }
   if (updateLane === SyncLane) {
-    // 同步->微任务
+    // 加入到函数数组中
     scheduleSyncCallback(performSyncWorkOnRoot.bind(null, root))
+
+    // 加入到微任务队列 去执行函数数组
     scheduleMicroTask(flushSyncCallbacks)
   } else {
   }

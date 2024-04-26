@@ -45,16 +45,33 @@ import ReactDom from 'react-dom/client'
 //   )
 // }
 
+// 更新
+// function App() {
+//   const [arr, setArr] = useState(['one', 'two', 'three'])
+//   return (
+//     <div>
+//       <h1 onClick={() => setArr(['two', 'three', 'one'])}>click me</h1>
+//       <ul>
+//         {arr.map((v) => (
+//           <li>{v}</li>
+//         ))}
+//       </ul>
+//     </div>
+//   )
+// }
+
+// 批处理
 function App() {
-  const [arr, setArr] = useState(['one', 'two', 'three'])
+  const [count, setCount] = useState(0)
+  function handle() {
+    setCount((count) => count + 1)
+    setCount((count) => count + 1)
+    setCount((count) => count + 1)
+  }
   return (
     <div>
-      <h1 onClick={() => setArr(['two', 'three', 'one'])}>click me</h1>
-      <ul>
-        {arr.map((v) => (
-          <li>{v}</li>
-        ))}
-      </ul>
+      <h1 onClick={handle}>点我</h1>
+      <h2>{count}</h2>
     </div>
   )
 }
