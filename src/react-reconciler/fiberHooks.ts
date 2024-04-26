@@ -87,9 +87,9 @@ function mountState<State>(
   hook.updateQueue = queue
   hook.memoizedState = memoizedState
 
-  const dispach = dispatchSetState.bind(null, currentlyRenderingFiber!, queue)
-  queue.dispatch = dispach
-  return [memoizedState, dispach]
+  const dispatch = dispatchSetState.bind(null, currentlyRenderingFiber!, queue)
+  queue.dispatch = dispatch
+  return [memoizedState, dispatch]
 }
 
 function dispatchSetState<State>(
@@ -97,9 +97,9 @@ function dispatchSetState<State>(
   updateQueue: UpdateQueue<State>,
   action: Action<State> // 组件内调用 setXXX 传入的值
 ) {
-  const update = createUpdate(action)
+  const update = createUpdate(action,renderLane)
   enqueueUpdate(updateQueue, update)
-  scheduleUpdateOnFiber(fiber)
+  scheduleUpdateOnFiber(fiber,renderLane)
 }
 
 function mountWorkInProgressHook(): Hook {

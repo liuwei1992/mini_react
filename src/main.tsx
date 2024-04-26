@@ -16,17 +16,32 @@ import ReactDom from 'react-dom/client'
 //   )
 // }
 
-function App() {
-  const [num, setNum] = useState(3)
-  return num === 3 ? (
-    <Child onClick={() => setNum(111)}></Child>
-  ) : (
-    <div>{num}</div>
-  )
-}
+// function App() {
+//   const [num, setNum] = useState(3)
+//   return num === 3 ? (
+//     <Child onClick={() => setNum(111)}></Child>
+//   ) : (
+//     <div>{num}</div>
+//   )
+// }
 
-function Child() {
-  return <span>childComponent</span>
+// function Child() {
+//   return <span>childComponent</span>
+// }
+
+// sibling
+function App() {
+  return (
+    <div>
+      <span>span</span>
+      <p>p</p>
+      <ul>
+        <li>1</li>
+        <li>2</li>
+        <li>3</li>
+      </ul>
+    </div>
+  )
 }
 
 const root = document.querySelector('#main')

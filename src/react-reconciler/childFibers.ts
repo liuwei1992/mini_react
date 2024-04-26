@@ -1,5 +1,9 @@
 import { ReactElementType } from '@/shared/ReactTypes'
-import { createFiberFromElement, createFiberFromFragment, FiberNode } from './fiber'
+import {
+  createFiberFromElement,
+  createFiberFromFragment,
+  FiberNode
+} from './fiber'
 import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from '@/shared/ReactSymbols'
 import { HostText } from './workTags'
 import { Placement } from './fiberFlags'
@@ -59,6 +63,122 @@ function ChildReconciler(shouldTrackEffect: boolean) {
     return fiber
   }
 
+  function reconcileChildrenArray(
+    returnFiber: FiberNode,
+    currentFirstChild: FiberNode | null,
+    newChild: any[]
+  ) {
+    // 最后一个可复用 fiber 在 current 中的 index
+    let lastPlacedIndex = 0
+    // 创建 的最后一个fiber
+    let lastNewFiber: FiberNode | null = null
+    let firstNewFiber: FiberNode | null = null
+
+    const existingChildren: ExistingChildren = new Map()
+    let current = currentFirstChild
+    while (current !== null) {
+      const keyToUse = current.key !== null ? current.key : current.key // ???
+      existingChildren.set(keyToUse, current)
+      current = current.sibling
+    }
+
+    for (let i = 0; i < newChild.length; i++) {
+      const after = newChild[i]
+      const newFiber = updateFromMap(returnFiber, existingChildren, i, after)
+      if (newFiber === null) {
+        continue
+      }
+
+      newFiber.index = i
+      newFiber.return = returnFiber
+
+      if (lastNewFiber === null) {
+        lastNewFiber = newFiber
+        firstNewFiber = newFiber
+      } else {
+        lastNewFiber.sibling = newFiber
+        lastNewFiber = lastNewFiber.sibling
+      }
+
+      if (!shouldTrackEffect) {
+        continue
+      }
+
+      const current = newFiber.alternate
+      if (current !== null) {
+        const oldIndex = current.index
+        if (oldIndex < lastPlacedIndex) {
+          newFiber.flags |= Placement
+          continue
+        } else {
+          lastPlacedIndex = oldIndex
+        }
+      } else {
+        newFiber.flags |= Placement
+      }
+    }
+
+    existingChildren.forEach((fiber) => {
+      deleteChild(returnFiber, fiber)
+    })
+    return firstNewFiber
+  }
+
+  function updateFromMap(
+    returnFiber: FiberNode,
+    existingChildren: ExistingChildren,
+    index: number,
+    element: any
+  ) {
+    const keyToUse = element.key !== null ? element.key : index
+    const before = existingChildren.get(keyToUse)
+
+    if (typeof element === 'string' || typeof element === 'number') {
+      if (before) {
+        if (before.tag === HostText) {
+          existingChildren.delete(keyToUse)
+          return useFiber(before, { content: `${element}` })
+        }
+      }
+      return new FiberNode(HostText, { content: `${element}` }, null)
+    }
+
+    if (typeof element === 'object' && element !== null) {
+      switch (element.$$typeof) {
+        case REACT_ELEMENT_TYPE:
+          if (element.type === REACT_FRAGMENT_TYPE) {
+            return updateFragment(
+              returnFiber,
+              before,
+              element,
+              keyToUse,
+              existingChildren
+            )
+          }
+          if (before) {
+            if (before.type === element.type) {
+              existingChildren.delete(keyToUse)
+              return useFiber(before, element.props)
+            }
+          }
+          return createFiberFromElement(element)
+      }
+      if (Array.isArray(element)) {
+        console.error('不支持数组类型')
+      }
+    }
+
+    if (Array.isArray(element)) {
+      return updateFragment(
+        returnFiber,
+        before,
+        element,
+        keyToUse,
+        existingChildren
+      )
+    }
+  }
+
   function placeSingleChild(fiber: FiberNode) {
     if (shouldTrackEffect && fiber.alternate === null) {
       fiber.flags |= Placement
@@ -72,6 +192,10 @@ function ChildReconciler(shouldTrackEffect: boolean) {
     newChild?: ReactElementType
   ) {
     if (typeof newChild === 'object' && newChild !== null) {
+      if (Array.isArray(newChild)) {
+        return reconcileChildrenArray(returnFiber, currentFiber, newChild)
+      }
+
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE:
           return placeSingleChild(
