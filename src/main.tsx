@@ -30,7 +30,8 @@ import ReactDom from 'react-dom/client'
 // }
 
 // sibling
-function App() {
+function App(props: any) {
+  console.log(props)
   return (
     <div>
       <span>span</span>
@@ -45,6 +46,6 @@ function App() {
 }
 
 const root = document.querySelector('#main')
-console.log('App element', App())
-console.log('App', <App />)
-ReactDom.createRoot(root as HTMLElement).render(<App />)
+console.log('App element', App({ testProps: 'testProps111' }))
+console.log('App', <App testProps="testProps" />)
+ReactDom.createRoot(root as HTMLElement).render(<App testProps="testProps" />)

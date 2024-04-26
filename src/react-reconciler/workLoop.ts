@@ -17,6 +17,7 @@ let workInProgress: FiberNode | null = null
 let wipRootRenderLane: Lane = NoLane
 let RootDoesHasPassiveEffects = false
 
+/** 处理 worlinprogress 等全局指针 */
 function prepareFreshStack(root: FiberRootNode, lane: Lane): void {
   workInProgress = createWorkInProgress(root.current, {})
   wipRootRenderLane = lane
@@ -97,24 +98,24 @@ function workLoop(): void {
   }
 }
 
-function renderRoot(root: FiberRootNode) {
-  // 初始化 wip
-  prepareFreshStack(root)
+// function renderRoot(root: FiberRootNode) {
+//   // 初始化 wip
+//   prepareFreshStack(root)
 
-  do {
-    try {
-      workLoop()
-      break
-    } catch (e) {
-      workInProgress = null
-    }
-  } while (true)
+//   do {
+//     try {
+//       workLoop()
+//       break
+//     } catch (e) {
+//       workInProgress = null
+//     }
+//   } while (true)
 
-  root.finishedWork = root.current.alternate
+//   root.finishedWork = root.current.alternate
 
-  // 真实的 dom 渲染
-  commitRoot(root)
-}
+//   // 真实的 dom 渲染
+//   commitRoot(root)
+// }
 
 function markRootUpdated(root: FiberRootNode, lane: Lane) {
   root.pendingLanes = mergeLane(root.pendingLanes, lane)

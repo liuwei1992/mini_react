@@ -55,7 +55,7 @@ function updateHostComponent(wip: FiberNode): FiberNode | null {
 }
 
 function updateFunctionComponent(wip: FiberNode, lane: Lane): FiberNode | null {
-  const nextChildren = renderWithHooks(wip, lane)
+  const nextChildren = renderWithHooks(wip,lane)
   reconcilerChildren(wip, nextChildren)
   return wip.child
 }
