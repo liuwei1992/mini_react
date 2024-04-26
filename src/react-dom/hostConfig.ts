@@ -1,8 +1,11 @@
 import { Props } from '@/shared/ReactTypes'
-import { updateFiberProps } from './SyntheticEvent'
+import { DomElement, updateFiberProps } from './SyntheticEvent'
+import { FiberNode } from '@/react-reconciler/fiber'
+import { HostComponent, HostText } from '@/react-reconciler/workTags'
 
 export type Container = any
-export type Instance = any
+export type Instance = Element
+export type TextInstance = Text
 
 export function createInstance(type: string, props: Props): Instance {
   const element = document.createElement(type)
@@ -10,7 +13,7 @@ export function createInstance(type: string, props: Props): Instance {
   return element
 }
 
-export function createTextInstance(content: string): Instance {
+export function createTextInstance(content: string): TextInstance {
   return document.createTextNode(content)
 }
 
@@ -19,6 +22,22 @@ export function appendInitialChild(
   child: Instance
 ) {
   parent.appendChild(child)
+}
+
+export function commitTextUpdate(testInstance: TextInstance, content: string) {
+  testInstance.textContent = content
+}
+
+export function commitUpdate(fiber: FiberNode) {
+  switch (fiber.tag) {
+    case HostText:
+      const text = fiber.memoizesProps?.content
+      return commitTextUpdate(fiber.stateNode, text)
+    case HostComponent:
+      return updateFiberProps(fiber.stateNode, fiber.memoizesProps)
+    default:
+      break
+  }
 }
 
 export const appendChildToContainer = appendInitialChild

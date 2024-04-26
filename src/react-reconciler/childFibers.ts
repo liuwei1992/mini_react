@@ -1,14 +1,51 @@
-import { ReactElementType } from '@/shared/ReactTypes'
+import { Key, Props, ReactElementType } from '@/shared/ReactTypes'
 import {
   createFiberFromElement,
   createFiberFromFragment,
+  createWorkInProgress,
   FiberNode
 } from './fiber'
 import { REACT_ELEMENT_TYPE, REACT_FRAGMENT_TYPE } from '@/shared/ReactSymbols'
 import { HostText } from './workTags'
-import { Placement } from './fiberFlags'
+import { ChildDeletion, Placement } from './fiberFlags'
+type ExistingChildren = Map<string | number, FiberNode>
 
 function ChildReconciler(shouldTrackEffect: boolean) {
+  function useFiber(fiber: FiberNode, pendingProps: Props) {
+    const clone = createWorkInProgress(fiber, pendingProps)
+    clone.index = 0
+    clone.sibling = null
+    return clone
+  }
+
+  function deleteChild(returnFiber: FiberNode, childToDelete: FiberNode): void {
+    if (!shouldTrackEffect) {
+      return
+    }
+    const deletions = returnFiber.deletions
+    if (deletions === null) {
+      returnFiber.deletions = [childToDelete]
+      returnFiber.flags |= ChildDeletion
+    } else {
+      deletions.push(childToDelete)
+    }
+  }
+
+  function deleteRemainingChildren(
+    returnFiber: FiberNode,
+    currentFirstChild: FiberNode | null
+  ) {
+    if (!shouldTrackEffect) {
+      return
+    }
+    let childToDelete = currentFirstChild
+
+    while (childToDelete !== null) {
+      deleteChild(returnFiber, childToDelete)
+      childToDelete = childToDelete.sibling
+    }
+  }
+
   function reconcilerSingleElement(
     returnFiber: FiberNode,
     currentFiber: FiberNode | null,
@@ -28,7 +65,7 @@ function ChildReconciler(shouldTrackEffect: boolean) {
             const existing = useFiber(currentFiber, props)
             existing.return = returnFiber
             // 当前节点可复用，标记剩余的节点删除
-            deleteRemainingChildren(returnFiber, currentFiber)
+            deleteRemainingChildren(returnFiber, currentFiber.sibling)
             return existing
           }
           deleteRemainingChildren(returnFiber, currentFiber)
@@ -77,7 +114,7 @@ function ChildReconciler(shouldTrackEffect: boolean) {
     const existingChildren: ExistingChildren = new Map()
     let current = currentFirstChild
     while (current !== null) {
-      const keyToUse = current.key !== null ? current.key : current.key // ???
+      const keyToUse = current.key !== null ? current.key : current.index // ???
       existingChildren.set(keyToUse, current)
       current = current.sibling
     }
@@ -124,14 +161,31 @@ function ChildReconciler(shouldTrackEffect: boolean) {
     return firstNewFiber
   }
 
+  function updateFragment(
+    returnFiber: FiberNode,
+    before: FiberNode | null,
+    element: any,
+    key: Key,
+    existingChildren: ExistingChildren
+  ): FiberNode {
+    if (before === null || before.tag !== element.tag) {
+      // Insert
+      return createFiberFromFragment(element, key)
+    } else {
+      // Update
+      existingChildren.delete(key!)
+      return useFiber(before, element)
+    }
+  }
+
   function updateFromMap(
     returnFiber: FiberNode,
     existingChildren: ExistingChildren,
     index: number,
     element: any
-  ) {
+  ): FiberNode | null {
     const keyToUse = element.key !== null ? element.key : index
-    const before = existingChildren.get(keyToUse)
+    const before = existingChildren.get(keyToUse) || null
 
     if (typeof element === 'string' || typeof element === 'number') {
       if (before) {
@@ -177,6 +231,7 @@ function ChildReconciler(shouldTrackEffect: boolean) {
         existingChildren
       )
     }
+    return null
   }
 
   function placeSingleChild(fiber: FiberNode) {

@@ -30,22 +30,36 @@ import ReactDom from 'react-dom/client'
 // }
 
 // sibling
-function App(props: any) {
-  console.log(props)
+// function App(props: any) {
+//   console.log(props)
+//   return (
+//     <div>
+//       <span>span</span>
+//       <p>p</p>
+//       <ul>
+//         <li>1</li>
+//         <li>2</li>
+//         <li>3</li>
+//       </ul>
+//     </div>
+//   )
+// }
+
+function App() {
+  const [arr, setArr] = useState(['one', 'two', 'three'])
   return (
     <div>
-      <span>span</span>
-      <p>p</p>
+      <h1 onClick={() => setArr(['two', 'three', 'one'])}>click me</h1>
       <ul>
-        <li>1</li>
-        <li>2</li>
-        <li>3</li>
+        {arr.map((v) => (
+          <li>{v}</li>
+        ))}
       </ul>
     </div>
   )
 }
 
 const root = document.querySelector('#main')
-console.log('App element', App({ testProps: 'testProps111' }))
-console.log('App', <App testProps="testProps" />)
-ReactDom.createRoot(root as HTMLElement).render(<App testProps="testProps" />)
+console.log('App element', App())
+console.log('App', <App />)
+ReactDom.createRoot(root as HTMLElement).render(<App />)

@@ -1,8 +1,20 @@
 import { Container } from 'react-dom'
-import { FiberNode } from './fiber'
-import { MutationMask, NoFlags, Placement } from './fiberFlags'
-import { HostComponent, HostRoot } from './workTags'
-import { appendInitialChild } from '@/react-dom/hostConfig'
+import { FiberNode, FiberRootNode } from './fiber'
+import {
+  ChildDeletion,
+  MutationMask,
+  NoFlags,
+  PassiveEffect,
+  Placement,
+  Update
+} from './fiberFlags'
+import { HostComponent, HostRoot, HostText } from './workTags'
+import {
+  appendChildToContainer,
+  appendInitialChild,
+  commitUpdate,
+  Instance
+} from '@/react-dom/hostConfig'
 
 let nextEffect: FiberNode | null = null
 
@@ -13,7 +25,7 @@ export function commitMutationEffects(finishedWork: FiberNode) {
     const child: FiberNode | null = nextEffect.child
 
     if (
-      (nextEffect.subtreeFlags & MutationMask) !== NoFlags &&
+      (nextEffect.subtreeFlags & (MutationMask | PassiveEffect)) !== NoFlags &&
       child !== null
     ) {
       nextEffect = child
@@ -32,7 +44,10 @@ export function commitMutationEffects(finishedWork: FiberNode) {
   }
 }
 
-function commitMutationEffectsOnFiber(finishedWork: FiberNode) {
+function commitMutationEffectsOnFiber(
+  finishedWork: FiberNode,
+  root: FiberRootNode
+) {
   const flags = finishedWork.flags
 
   if ((flags & Placement) !== NoFlags) {
@@ -40,15 +55,32 @@ function commitMutationEffectsOnFiber(finishedWork: FiberNode) {
     finishedWork.flags &= ~Placement
   }
 
-  // flags Update
-  // flags ChildDeletion
+  if ((flags & Update) !== NoFlags) {
+    commitUpdate(finishedWork)
+    finishedWork.flags &= ~Update
+  }
+
+  if ((flags & ChildDeletion) !== NoFlags) {
+    const deletions = finishedWork.deletions
+    if (deletions !== null) {
+      deletions.forEach((childToDelete) => commitDeletion(childToDelete, root))
+    }
+    finishedWork.flags &= ~ChildDeletion
+  }
+  if ((flags & PassiveEffect) !== NoFlags) {
+    commitPassiveEffect(finishedWork, root, 'update')
+    finishedWork.flags &= ~PassiveEffect
+  }
 }
 
 function commitPlacement(finishedWork: FiberNode) {
   const hostParent = getHostParent(finishedWork)
 
+  const sibling = getHostSibling(finishedWork)
+
   if (hostParent !== null) {
-    appendPlacementNodeIntoContainer(finishedWork, hostParent)
+    // appendPlacementNodeIntoContainer(finishedWork, hostParent)
+    insertOrAppendPlacementNodeIntoContainer(finishedWork, hostParent, sibling)
   }
 }
 
@@ -65,6 +97,20 @@ function getHostParent(fiber: FiberNode): Container | null {
     parent = parent.return
   }
   return null
+}
+
+function insertOrAppendPlacementNodeIntoContainer(
+  finishedWork: FiberNode,
+  hostParent: Container,
+  before?: Instance
+) {
+  if (finishedWork.tag === HostComponent || finishedWork.tag === HostText) {
+    if (before) {
+      insertChildToContainer(finishedWork.stateNode, hostParent, before)
+    } else {
+      appendChildToContainer(hostParent, finishedWork.stateNode)
+    }
+  }
 }
 
 function appendPlacementNodeIntoContainer(

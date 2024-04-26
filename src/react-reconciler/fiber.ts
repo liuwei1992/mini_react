@@ -30,6 +30,7 @@ export class FiberNode {
   flags: Flags = NoFlags
   subtreeFlags: Flags = NoFlags
   updateQueue: UpdateQueue | null = null
+  deletions: Array<FiberNode> | null = null
 
   /**
    *

@@ -1,5 +1,5 @@
 export type Type = any
-export type Key = string | number | bigint | null
+export type Key = string | number | null
 export type Ref = any | null
 export type Props = null | {
   children?: any // string | ReactElementType | ReactElementType[]

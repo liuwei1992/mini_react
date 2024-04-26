@@ -2,10 +2,11 @@ import { beginWork } from './beginWork'
 import { commitMutationEffects } from './commitWork'
 import { completeWork } from './completeWork'
 import { createWorkInProgress, FiberNode, FiberRootNode } from './fiber'
-import { MutationMask, NoFlags } from './fiberFlags'
+import { MutationMask, NoFlags, PassiveEffect } from './fiberFlags'
 import {
   getHighestPriorityLane,
   Lane,
+  markRootFinished,
   mergeLane,
   NoLane,
   SyncLane
@@ -77,7 +78,22 @@ function commitRoot(root: FiberRootNode) {
     return
   }
 
+  const lane = root.finishedLane
+
   root.finishedWork = null
+  root.finishedLane = NoLane
+
+  markRootFinished(root, lane)
+
+  if (
+    (finishedWork.flags & PassiveEffect) !== NoFlags ||
+    (finishedWork.subtreeFlags & PassiveEffect) !== NoFlags
+  ) {
+    if (RootDoesHasPassiveEffects) {
+      RootDoesHasPassiveEffects = true
+      flushPassiveEffect(root.pendingPassiveffects)
+    }
+  }
 
   const subtreeHasEffect =
     (finishedWork.subtreeFlags & MutationMask) !== NoFlags
