@@ -8,6 +8,10 @@ export type UpdateQueue<T = any> = {
   dispatch: any
 }
 
+export interface FCUpdateQueue<T> extends UpdateQueue<T> {
+  lastEffect: any
+}
+
 export type Update<T> = {
   action: Action<T>
   lane: Lane

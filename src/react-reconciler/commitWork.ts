@@ -1,20 +1,28 @@
 import { Container } from 'react-dom'
-import { FiberNode, FiberRootNode } from './fiber'
+import { FiberNode, FiberRootNode, PendingPassivEffects } from './fiber'
 import {
   ChildDeletion,
+  Flags,
   MutationMask,
   NoFlags,
   PassiveEffect,
   Placement,
   Update
 } from './fiberFlags'
-import { HostComponent, HostRoot, HostText } from './workTags'
+import {
+  FunctionComponent,
+  HostComponent,
+  HostRoot,
+  HostText
+} from './workTags'
 import {
   appendChildToContainer,
   appendInitialChild,
   commitUpdate,
   Instance
 } from '@/react-dom/hostConfig'
+import { FCUpdateQueue } from './updateQueue'
+import { Effect } from '@/react/currentDispatcher'
 
 let nextEffect: FiberNode | null = null
 
@@ -73,6 +81,24 @@ function commitMutationEffectsOnFiber(
   }
 }
 
+function commitPassiveEffect(
+  fiber: FiberNode,
+  root: FiberRootNode,
+  type: keyof PendingPassivEffects
+) {
+  if (
+    fiber.tag !== FunctionComponent ||
+    (type === 'update' && (fiber.flags & PassiveEffect) === NoFlags)
+  ) {
+    return
+  }
+
+  const updateQueue = fiber.updateQueue as FCUpdateQueue<any>
+  if (updateQueue !== null) {
+    root.pendingPassivEffects![type].push(updateQueue.lastEffect)
+  }
+}
+
 function commitPlacement(finishedWork: FiberNode) {
   const hostParent = getHostParent(finishedWork)
 
@@ -113,23 +139,34 @@ function insertOrAppendPlacementNodeIntoContainer(
   }
 }
 
-// function appendPlacementNodeIntoContainer(
-//   finishedWork: FiberNode,
-//   hostParent: Container
-// ) {
-//   if (finishedWork.tag === HostComponent) {
-//     appendInitialChild(hostParent, finishedWork.stateNode)
-//     return
-//   }
+function commitHookEffectList(
+  flags: Flags,
+  lastEffect: Effect,
+  callback: (effect: Effect) => void
+) {
+  let effect = lastEffect.next as Effect
+  do {
+    if ((effect.tag & flags) === flags) {
+      callback(effect)
+    }
+    effect = effect.next as Effect
+  } while (effect !== lastEffect.next)
+}
 
-//   const child = finishedWork.child
-//   if (child !== null) {
-//     appendPlacementNodeIntoContainer(child, hostParent)
-//     let sibling = child.sibling
+export function commitHookEffectListDestory(flags: Flags, lastEffect: Effect) {
+  commitHookEffectList(flags, lastEffect, (effect: Effect) => {
+    const destroy = effect.destroy
+    if (typeof destroy === 'function') {
+      destroy()
+    }
+  })
+}
 
-//     while (sibling !== null) {
-//       appendPlacementNodeIntoContainer(sibling, hostParent)
-//       sibling = sibling.sibling
-//     }
-//   }
-// }
+export function commitHookEffectListCreate(flags: Flags, lastEffect: Effect) {
+  commitHookEffectList(flags, lastEffect, (effect: Effect) => {
+    const create = effect.create
+    if (typeof create === 'function') {
+      effect.destroy = create()
+    }
+  })
+}

@@ -1,9 +1,18 @@
 import { scheduleMicroTask } from '@/react-dom/hostConfig'
 import { beginWork } from './beginWork'
-import { commitMutationEffects } from './commitWork'
+import {
+  commitHookEffectListCreate,
+  commitHookEffectListDestory,
+  commitMutationEffects
+} from './commitWork'
 import { completeWork } from './completeWork'
-import { createWorkInProgress, FiberNode, FiberRootNode } from './fiber'
-import { MutationMask, NoFlags, PassiveEffect } from './fiberFlags'
+import {
+  createWorkInProgress,
+  FiberNode,
+  FiberRootNode,
+  PendingPassivEffects
+} from './fiber'
+import { MutationMask, NoFlags, PassiveEffect, PassiveMask } from './fiberFlags'
 import {
   getHighestPriorityLane,
   Lane,
@@ -14,10 +23,11 @@ import {
 } from './fiberLanes'
 import { flushSyncCallbacks, scheduleSyncCallback } from './syncTaskQueue'
 import { HostRoot } from './workTags'
+import { HookHasEffect, Passive } from './hookEffectTags'
 
 let workInProgress: FiberNode | null = null
 let wipRootRenderLane: Lane = NoLane
-let RootDoesHasPassiveEffects = false
+let rootDoesHasPassiveEffects = false
 
 /** 处理 worlinprogress 等全局指针 */
 function prepareFreshStack(root: FiberRootNode, lane: Lane): void {
@@ -87,12 +97,15 @@ function commitRoot(root: FiberRootNode) {
   markRootFinished(root, lane)
 
   if (
-    (finishedWork.flags & PassiveEffect) !== NoFlags ||
-    (finishedWork.subtreeFlags & PassiveEffect) !== NoFlags
+    (finishedWork.flags & PassiveMask) !== NoFlags ||
+    (finishedWork.subtreeFlags & PassiveMask) !== NoFlags
   ) {
-    if (RootDoesHasPassiveEffects) {
-      RootDoesHasPassiveEffects = true
-      flushPassiveEffect(root.pendingPassiveffects)
+    if (!rootDoesHasPassiveEffects) {
+      rootDoesHasPassiveEffects = true
+      // 宏任务异步执行，所以是在dom挂载完成后
+      setTimeout(() => {
+        flushPassiveEffect(root.pendingPassivEffects)
+      })
     }
   }
 
@@ -101,12 +114,29 @@ function commitRoot(root: FiberRootNode) {
   const rootHasEffect = (finishedWork.flags & MutationMask) !== NoFlags
 
   if (subtreeHasEffect || rootHasEffect) {
+    // 修改真实dom
     commitMutationEffects(finishedWork)
 
     root.current = finishedWork
   } else {
     root.current = finishedWork
   }
+}
+
+function flushPassiveEffect(pendingPassivEffects: PendingPassivEffects) {
+  pendingPassivEffects.unmount.forEach((effect) =>
+    commitHookEffectListUnmount(Passive, effect)
+  )
+  pendingPassivEffects.unmount = []
+
+  pendingPassivEffects.update.forEach((effect) =>
+    commitHookEffectListDestory(Passive | HookHasEffect, effect)
+  )
+  pendingPassivEffects.update.forEach((effect) =>
+    commitHookEffectListCreate(Passive | HookHasEffect, effect)
+  )
+  pendingPassivEffects.update = []
+  flushSyncCallbacks()
 }
 
 function workLoop(): void {

@@ -68,11 +68,19 @@ export function createFiberFromFragment(elements: any[], key: Key) {
   return fiber
 }
 
+export interface PendingPassivEffects {
+  unmount: any[]
+  update: any[]
+}
+
 export class FiberRootNode {
   finishedWork: FiberNode | null
   finishedLane = NoLane
   pendingLanes = NoFlags
-  pendingPassiveffects = null
+  pendingPassivEffects: PendingPassivEffects = {
+    unmount: [],
+    update: []
+  }
 
   constructor(public container: any, public current: FiberNode) {
     current.stateNode = this

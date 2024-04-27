@@ -1,9 +1,21 @@
 import { Action } from '@/shared/ReactTypes'
 
+export type EffectCallback = () => (() => void) | void
+export type EffectDeps = Array<any> | void | null
+export type EffectDestroy = (() => void) | void
+
+export interface Effect {
+  tag: number
+  create: EffectCallback
+  destroy: EffectDestroy | null
+  deps: EffectDeps
+  next: Effect | null
+}
 export interface Dispatcher {
   useState: <State>(
     initialState: State | (() => State)
   ) => [State, Dispatch<State>]
+  useEffect: (create: EffectCallback, deps: EffectDeps) => void
 }
 
 export type Dispatch<State> = (action: Action<State>) => void
