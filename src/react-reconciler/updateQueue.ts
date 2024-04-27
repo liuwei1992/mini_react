@@ -67,19 +67,32 @@ export function enqueueUpdate<State>(
 /** 获得 pending.action 的结果 */
 export function processUpdateQueue<State = any>(
   baseState: State,
-  pendingUpdate: Update<State>
+  pendingUpdate: Update<State>,
+  renderLane: Lane
 ): { memoizedState: State } {
   const result = {
     memoizedState: baseState
   }
 
   if (pendingUpdate !== null) {
-    const action = pendingUpdate.action
-    if (action instanceof Function) {
-      result.memoizedState = action(baseState)
-    } else {
-      result.memoizedState = action
-    }
+    const first = pendingUpdate.next
+    let pending = pendingUpdate.next as Update<any>
+    do {
+      const updateLane = pending.lane
+      if (updateLane === renderLane) {
+        const action = pending?.action
+        if (action instanceof Function) {
+          baseState = action(baseState)
+        } else {
+          baseState = action
+        }
+      } else {
+        console.log('不应该进入 updateLane ！== renderLane 的逻辑')
+      }
+      pending = pending.next as Update<State>
+    } while (pending !== first)
+
+    result.memoizedState = baseState
   }
 
   return result
