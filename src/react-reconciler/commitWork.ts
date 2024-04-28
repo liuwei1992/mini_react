@@ -137,6 +137,16 @@ function insertOrAppendPlacementNodeIntoContainer(
       appendChildToContainer(hostParent, finishedWork.stateNode)
     }
   }
+
+  const child = finishedWork.child
+  if (child !== null) {
+    insertOrAppendPlacementNodeIntoContainer(child, hostParent)
+    let sibling = child.sibling
+    while (sibling !== null) {
+      insertOrAppendPlacementNodeIntoContainer(sibling, hostParent)
+      sibling = sibling.sibling
+    }
+  }
 }
 
 function commitHookEffectList(

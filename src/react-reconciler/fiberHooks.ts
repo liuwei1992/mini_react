@@ -220,28 +220,11 @@ function updateWorkInProgressHook(): Hook {
 
     currentHook = nextCurrentHook
   } else {
-    // Clone from the current hook.
-
-    if (nextCurrentHook === null) {
-      const currentFiber = currentlyRenderingFiber!.alternate
-      if (currentFiber === null) {
-        // This is the initial render. This branch is reached when the component
-        // suspends, resumes, then renders an additional hook.
-        // Should never be reached because we should switch to the mount dispatcher first.
-        throw new Error(
-          'Update hook called on initial render. This is likely a bug in React. Please file an issue.'
-        )
-      } else {
-        // This is an update. We should always have a current hook.
-        throw new Error('Rendered more hooks than during the previous render.')
-      }
-    }
-
     currentHook = nextCurrentHook
 
     const newHook: Hook = {
-      memoizedState: currentHook.memoizedState,
-      updateQueue: currentHook.updateQueue,
+      memoizedState: currentHook!.memoizedState,
+      updateQueue: currentHook!.updateQueue,
       next: null
     }
 

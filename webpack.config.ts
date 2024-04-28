@@ -6,8 +6,8 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 
 const config: webpack.Configuration = {
   mode: 'development',
-  // entry: './src/main.tsx',
-  entry: './src/laneDemo.ts',
+  entry: './src/main.tsx',
+  // entry: './src/laneDemo.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].bundle.js'

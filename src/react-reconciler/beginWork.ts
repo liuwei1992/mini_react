@@ -2,6 +2,7 @@ import { ReactElementType } from '@/shared/ReactTypes'
 import { FiberNode } from './fiber'
 import { processUpdateQueue } from './updateQueue'
 import {
+  Fragment,
   FunctionComponent,
   HostComponent,
   HostRoot,
@@ -22,6 +23,8 @@ export function beginWork(wip: FiberNode, lane: Lane): FiberNode | null {
       return null
     case FunctionComponent:
       return updateFunctionComponent(wip, lane)
+    case Fragment:
+      return updateFragment(wip, lane)
     default:
       console.error('beginWork 不支持的类型')
       break
@@ -55,7 +58,7 @@ function updateHostComponent(wip: FiberNode): FiberNode | null {
 }
 
 function updateFunctionComponent(wip: FiberNode, lane: Lane): FiberNode | null {
-  const nextChildren = renderWithHooks(wip,lane)
+  const nextChildren = renderWithHooks(wip, lane)
   reconcilerChildren(wip, nextChildren)
   return wip.child
 }

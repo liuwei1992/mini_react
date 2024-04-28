@@ -1,17 +1,18 @@
 import {
   appendInitialChild,
+  Container,
   createInstance,
   createTextInstance
 } from '@/react-dom/hostConfig'
 import { FiberNode } from './fiber'
 import { NoFlags } from './fiberFlags'
 import {
+  Fragment,
   FunctionComponent,
   HostComponent,
   HostRoot,
   HostText
 } from './workTags'
-import { Container } from 'react-dom'
 
 export function completeWork(wip: FiberNode) {
   const newProps = wip.pendingProps
@@ -42,9 +43,8 @@ export function completeWork(wip: FiberNode) {
       bubbleProperties(wip)
       return null
     case HostRoot:
-      bubbleProperties(wip)
-      return null
     case FunctionComponent:
+    case Fragment:
       bubbleProperties(wip)
       return null
   }
