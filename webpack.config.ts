@@ -6,7 +6,8 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 
 const config: webpack.Configuration = {
   mode: 'development',
-  entry: './src/main.tsx',
+  // entry: './src/main.tsx',
+  entry: './src/laneDemo.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].bundle.js'
@@ -17,7 +18,7 @@ const config: webpack.Configuration = {
   cache: {
     type: 'filesystem'
   },
-  devtool: 'cheap-module-source-map',
+  devtool: 'eval',
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.json'],
     alias: {
